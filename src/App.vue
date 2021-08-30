@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <tree :tree-data="org" :drop="drop"></tree>
-  </div>
+  <tree :tree-data="org" :drop="drop"></tree>
 </template>
 
 <script>
@@ -19,13 +17,20 @@ export default {
               children: [
                 {
                   name: "Отдел 2",
+                  children: [],
                 },
                 {
                   name: "Отдел 3",
-                  children: [{ name: "Otdel 10" }],
+                  children: [
+                    {
+                      name: "Otdel 10",
+                      children: [],
+                    },
+                  ],
                 },
                 {
                   name: "Отдел 4",
+                  children: [],
                 },
               ],
             },
@@ -34,11 +39,13 @@ export default {
               children: [
                 {
                   name: "Отдел 6",
+                  children: [],
                 },
               ],
             },
             {
               name: "Отдел 7",
+              children: [],
             },
           ],
         },
@@ -50,41 +57,54 @@ export default {
   },
   methods: {
     drop(e) {
-      const depart = e.dataTransfer.getData("depart");
-      const departObj = JSON.parse(depart);
-      /* console.log(e.target.textContent, departName); */
-      /* console.log(departName); */
+      const departObj = JSON.parse(e.dataTransfer.getData("depart"));
 
-      function iterate(obj) {
-        for (let key in obj) {
-          if (typeof obj[key] == "object") {
-            // если значение свойства обьект, вызываем для него функцию iterate(рекурсия)
-            iterate(obj[key]);
-          } else {
-            /* if (obj.name === departName) {
-              delete obj[0];
-            } */
-            if (
-              obj.name === e.target.textContent ||
-              obj.name === e.target.querySelector(".label").textContent
-            ) {
-              if (obj.children) {
-                obj.children = [...obj.children, departObj];
-              } else {
-                obj.children = [];
-                obj.children = [departObj];
-              }
+      const findNodeByName = (tree, searchId) => {
+        let findedNode = undefined;
+
+        const recurse = (tree, searchId, path = []) => {
+          for (let index = 0; index < tree.length; index++) {
+            const node = tree[index];
+            if (node.name === searchId) {
+              /* console.log("Node finded path –", [...path, index]);
+              console.log("Node", node); */
+              findedNode = { path, node, index };
+            } else if (node?.children?.length) {
+              recurse(node.children, searchId, [...path, index, "children"]);
             }
           }
-        }
-      }
+        };
 
-      this.org = this.org.map((depart) => {
-        /* console.log(depart); */
-        iterate(depart);
-        return depart;
-      });
-      console.log(this.org);
+        recurse(tree, searchId);
+
+        return findedNode;
+      };
+
+      console.log(e.target.textContent);
+
+      const ejectNode = (tree, nodeName) => {
+        const node = findNodeByName(tree, nodeName);
+        const nodeParent = node.path.reduce(
+          (nodeParent, path) => nodeParent[path],
+          tree
+        );
+        return nodeParent.splice(node.index, 1);
+      };
+
+      const movingNode = ejectNode(this.org, departObj.name);
+      console.log(movingNode);
+
+      const insertNode = (tree, nodeName) => {
+        const node = findNodeByName(tree, nodeName);
+        node.node.children.push(movingNode[0]);
+      };
+
+      const target =
+        e.target.querySelector(".label") === null
+          ? e.target.textContent
+          : e.target.querySelector(".label").textContent;
+
+      insertNode(this.org, target);
     },
   },
 };

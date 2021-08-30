@@ -6,7 +6,7 @@
   >
     <span class="label">{{ node.name }}</span>
 
-    <ul v-if="node.children && node.children.length">
+    <ul v-if="node.children && node.children.length" class="tree-list">
       <node
         v-for="child in node.children"
         :node="child"
@@ -25,6 +25,7 @@ export default {
   methods: {
     startDrag: (e, item) => {
       const itemStr = JSON.stringify(item);
+
       e.dataTransfer.dropEffect = "move";
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("depart", itemStr);
